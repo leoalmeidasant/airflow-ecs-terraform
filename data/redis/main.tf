@@ -1,6 +1,24 @@
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = "terraform-state-leoalmeida"
+    key    = "network/vpc/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
+data "terraform_remote_state" "sg" {
+  backend = "s3"
+  config = {
+    bucket = "terraform-state-leoalmeida"
+    key    = "network/sg/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
 resource "aws_elasticache_subnet_group" "airflow_redis_subnet_group" {
   name       = "tf-redis-subnet-group"
-  subnet_ids = data.aws_subnet_ids.all.ids
+  subnet_ids = data.terraform_remote_state.network.private_subnets
 }
 
 resource "aws_elasticache_cluster" "airflow_redis" {
@@ -12,13 +30,9 @@ resource "aws_elasticache_cluster" "airflow_redis" {
   engine_version       = "5.0.6"
   port                 = 6379
   subnet_group_name    = aws_elasticache_subnet_group.airflow_redis_subnet_group.name
-  security_group_ids   = [module.ariflow_redis_sg.this_security_group_id]
+  security_group_ids   = [data.terraform_remote_state.sg.redis_security_group_id]
 
   tags = {
     Project = "Airflow ECS"
   }
-}
-
-output "airflow_redis_address" {
-  value = aws_elasticache_cluster.airflow_redis.cache_nodes.0.address
 }

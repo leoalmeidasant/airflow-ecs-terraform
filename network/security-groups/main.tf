@@ -1,9 +1,18 @@
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = "terraform-state-leoalmeida"
+    key    = "network/vpc/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
 module "airflow_webserver_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
   name        = "airflow-webserver-sg-${terraform.workspace}"
   description = "Security group for airflow webserver with custom ports open within VPC, and PostgreSQL"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = data.terraform_remote_state.network.vpc_id
 
   ingress_with_cidr_blocks = [
     {
@@ -25,7 +34,7 @@ module "airflow_worker_sg" {
 
   name        = "airflow-worker-sg-${terraform.workspace}"
   description = "Security group for airflow worker with custom ports open within VPC."
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = data.terraform_remote_state.network.vpc_id
 
   computed_ingress_with_source_security_group_id = [
     {
@@ -49,7 +58,7 @@ module "airflow_flower_sg" {
 
   name        = "airflow-flower-sg-${terraform.workspace}"
   description = "Security group for airflow flower with custom ports open within VPC."
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = data.terraform_remote_state.network.vpc_id
 
   ingress_with_cidr_blocks = [
     {
@@ -71,7 +80,7 @@ module "airflow_scheduler_sg" {
 
   name        = "airflow-scheduler-sg"
   description = "Security group for airflow scheduler with custom ports open within VPC."
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = data.terraform_remote_state.network.vpc_id
 
   egress_rules = ["all-all"]
   
@@ -83,7 +92,7 @@ module "ariflow_redis_sg" {
 
   name        = "airflow-redis-sg-${terraform.workspace}"
   description = "Security group for airflow redis."
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = data.terraform_remote_state.network.vpc_id
 
   computed_ingress_with_source_security_group_id = [
     {
@@ -128,7 +137,7 @@ module "ariflow_db_sg" {
 
   name        = "airflow-db-sg-${terraform.workspace}"
   description = "Security group for airflow database with custom ports open within VPC, and PostgreSQL"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = data.terraform_remote_state.network.vpc_id
 
   computed_ingress_with_source_security_group_id = [
     {
@@ -165,50 +174,48 @@ module "airflow_codebuild_sg" {
 
   name        = "airflow-codebuild-sg"
   description = "Security group for Airflow Codebuild"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = data.terraform_remote_state.network.vpc_id
 
   egress_rules = ["all-all"]
 
   tags = var.sg_tags
 }
 
-module "efs_airflow_sg" {
+module "ariflow_efs_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
-  name        = "efs-airflow-sg"
-  description = "Security group for Airflow EFS"
-  vpc_id      = data.aws_vpc.default.id
+  name        = "airflow-dags-efs-sg-${terraform.workspace}"
+  description = "Security group airflow dags efs."
+  vpc_id      = data.terraform_remote_state.network.vpc_id
 
   computed_ingress_with_source_security_group_id = [
     {
-      rule                     = "NFS"
-      description              = "EFS to Airflow"
+      from_port                = 2049
+      to_port                  = 2049
+      protocol                 = "tcp"
+      description              = "Airflow Webserver"
+      source_security_group_id = module.airflow_webserver_sg.this_security_group_id
+    },
+    {
+      from_port                = 2049
+      to_port                  = 2049
+      protocol                 = "tcp"
+      description              = "Airflow Scheduler"
       source_security_group_id = module.airflow_scheduler_sg.this_security_group_id
     },
     {
-      rule                     = "NFS"
-      description              = "EFS to codebuild"
+      from_port                = 2049
+      to_port                  = 2049
+      protocol                 = "tcp"
+      description              = "Airflow Codebuild"
       source_security_group_id = module.airflow_codebuild_sg.this_security_group_id
     }
   ]
 
   egress_rules = ["all-all"]
 
+  number_of_computed_ingress_with_source_security_group_id = 3
+
+  depends_on   = [module.airflow_webserver_sg, module.airflow_codebuild_sg, module.airflow_scheduler_sg]
   tags = var.sg_tags
-}
-
-output "webserver-security-group-id" {
-  value = module.airflow_webserver_sg.this_security_group_id
-}
-
-output "scheduler-security-group-id" {
-  value = module.airflow_scheduler_sg.this_security_group_id
-}
-
-output "worker-security-group-id" {
-  value = module.airflow_worker_sg.this_security_group_id
-}
-
-output "flower-security-group-id" {
-  value = module.airflow_flower_sg.this_security_group_id
 }

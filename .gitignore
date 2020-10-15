@@ -1,5 +1,6 @@
 terraform.tfvars
 terraform.out
 .terraform
+.terraform/
 container-definitions/
 terraform.tfstate.d
