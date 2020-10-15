@@ -1,27 +1,18 @@
 source .env
 
 cd network/vpc/
-terraform destroy
-
+rm -rf .terraform
 cd ../../network/security-groups/
-terraform destroy
-
-source .env
+rm -rf .terraform
 cd ../../monitoring/cloudwatch/
-terraform destroy
-
-source .env
+rm -rf .terraform
 cd ../../data/ecr/
-terraform destroy
-
+rm -rf .terraform
 cd ../../data/ecs/
-terraform destroy
-
+rm -rf .terraform
 cd ../../data/efs/
-terraform destroy
-
+rm -rf .terraform
 cd ../../data/redis/
-terraform destroy
-
+rm -rf .terraform
 cd ../../data/rds/
-terraform destroy
+rm -rf .terraform

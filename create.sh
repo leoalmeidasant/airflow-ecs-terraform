@@ -1,4 +1,7 @@
 source .env
+
+terraform workspace new dev
+
 cd network/vpc/
 terraform init
 terraform plan -out vpc.plan
