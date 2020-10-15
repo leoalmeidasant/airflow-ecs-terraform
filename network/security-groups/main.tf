@@ -1,7 +1,7 @@
 data "terraform_remote_state" "network" {
   backend = "s3"
   config = {
-    bucket = "terraform-state-leoalmeida"
+    bucket = "terraform-state-airflow-letrus"
     key    = "network/vpc/terraform.tfstate"
     region = "us-east-1"
   }

@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket = "terraform-state-leoalmeida"
+    bucket = "terraform-state-airflow-letrus"
     key    = "data/rds"
     region = "us-east-1"
   }

@@ -4,3 +4,5 @@ terraform.out
 .terraform/
 container-definitions/
 terraform.tfstate.d
+.env
+*.plan
