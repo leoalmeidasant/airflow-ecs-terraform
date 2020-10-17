@@ -1,3 +1,10 @@
+terraform {
+  backend "s3" {
+    key    = "network/vpc/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
 data "aws_availability_zones" "all" {}
 
 resource "aws_vpc" "vpc" {

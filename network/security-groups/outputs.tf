@@ -19,7 +19,7 @@ output "efs_security_group_id" {
 }
 
 output "database_security_group_id" {
-    value = module.ariflow_db_sg.this_security_group_id
+    value = module.airflow_db_sg.this_security_group_id
 }
 
 output "codebuild_security_group_id" {
@@ -27,5 +27,5 @@ output "codebuild_security_group_id" {
 }
 
 output "redis_security_group_id" {
-  value = module.ariflow_redis_sg.this_security_group_id
+  value = module.airflow_redis_sg.this_security_group_id
 }

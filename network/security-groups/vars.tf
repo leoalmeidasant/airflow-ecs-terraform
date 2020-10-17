@@ -1,0 +1,1 @@
+variable "state_bucket" {}

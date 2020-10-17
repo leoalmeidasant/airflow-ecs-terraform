@@ -1,3 +1,11 @@
+terraform {
+  backend "s3" {
+    key    = "data/ecr"
+    region = "us-east-1"
+  }
+}
+
+
 resource "aws_ecr_repository" "airflow_ecr_endpoint" {
   name = "airflow-${terraform.workspace}"
   tags = {

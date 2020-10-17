@@ -1,7 +1,15 @@
-data "terraform_remote_state" "network" {
-  backend = "s3"
+terraform {
+  backend "s3" {
+    key    = "network/sg/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
+data "terraform_remote_state" "vpc" {
+  backend   = "s3"
+  
   config = {
-    bucket = "terraform-state-airflow-letrus"
+    bucket = var.state_bucket
     key    = "network/vpc/terraform.tfstate"
     region = "us-east-1"
   }
@@ -12,7 +20,7 @@ module "airflow_webserver_sg" {
 
   name        = "airflow-webserver-sg-${terraform.workspace}"
   description = "Security group for airflow webserver with custom ports open within VPC, and PostgreSQL"
-  vpc_id      = data.terraform_remote_state.network.vpc_id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   ingress_with_cidr_blocks = [
     {
@@ -26,7 +34,16 @@ module "airflow_webserver_sg" {
 
   egress_rules = ["all-all"]
 
-  tags = var.sg_tags
+  tags = {
+    Name = "airflow-webserver-bi-${terraform.workspace}-sg"
+    Environment = "${terraform.workspace}"
+    ApplicationRole = "Security Group - Webserver - Airflow-${terraform.workspace}"
+    Project = "Airflow"
+    Squad = "BI"
+    Chapter = "BI"
+    CostCenter = "BI"
+    Confidentiality = "Low"
+  }
 }
 
 module "airflow_worker_sg" {
@@ -34,7 +51,7 @@ module "airflow_worker_sg" {
 
   name        = "airflow-worker-sg-${terraform.workspace}"
   description = "Security group for airflow worker with custom ports open within VPC."
-  vpc_id      = data.terraform_remote_state.network.vpc_id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   computed_ingress_with_source_security_group_id = [
     {
@@ -50,7 +67,16 @@ module "airflow_worker_sg" {
 
   number_of_computed_ingress_with_source_security_group_id = 1
 
-  tags = var.sg_tags
+  tags = {
+    Name = "airflow-worker-bi-${terraform.workspace}-sg"
+    Environment = "${terraform.workspace}"
+    ApplicationRole = "Security Group - Worker - Airflow-${terraform.workspace}"
+    Project = "Airflow"
+    Squad = "BI"
+    Chapter = "BI"
+    CostCenter = "BI"
+    Confidentiality = "Low"
+  }
 }
 
 module "airflow_flower_sg" {
@@ -58,7 +84,7 @@ module "airflow_flower_sg" {
 
   name        = "airflow-flower-sg-${terraform.workspace}"
   description = "Security group for airflow flower with custom ports open within VPC."
-  vpc_id      = data.terraform_remote_state.network.vpc_id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   ingress_with_cidr_blocks = [
     {
@@ -72,7 +98,16 @@ module "airflow_flower_sg" {
 
   egress_rules = ["all-all"]
 
-  tags = var.sg_tags
+  tags = {
+    Name = "airflow-flower-bi-${terraform.workspace}-sg"
+    Environment = "${terraform.workspace}"
+    ApplicationRole = "Security Group - Flower - Airflow-${terraform.workspace}"
+    Project = "Airflow"
+    Squad = "BI"
+    Chapter = "BI"
+    CostCenter = "BI"
+    Confidentiality = "Low"
+  }
 }
 
 module "airflow_scheduler_sg" {
@@ -80,19 +115,28 @@ module "airflow_scheduler_sg" {
 
   name        = "airflow-scheduler-sg"
   description = "Security group for airflow scheduler with custom ports open within VPC."
-  vpc_id      = data.terraform_remote_state.network.vpc_id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   egress_rules = ["all-all"]
   
-  tags = var.sg_tags
+  tags = {
+    Name = "airflow-scheduler-bi-${terraform.workspace}-sg"
+    Environment = "${terraform.workspace}"
+    ApplicationRole = "Security Group - Scheduler - Airflow-${terraform.workspace}"
+    Project = "Airflow"
+    Squad = "BI"
+    Chapter = "BI"
+    CostCenter = "BI"
+    Confidentiality = "Low"
+  }
 }
 
-module "ariflow_redis_sg" {
+module "airflow_redis_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
   name        = "airflow-redis-sg-${terraform.workspace}"
   description = "Security group for airflow redis."
-  vpc_id      = data.terraform_remote_state.network.vpc_id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   computed_ingress_with_source_security_group_id = [
     {
@@ -129,15 +173,24 @@ module "ariflow_redis_sg" {
 
   number_of_computed_ingress_with_source_security_group_id = 4
 
-  tags = var.sg_tags
+  tags = {
+    Name = "airflow-redis-bi-${terraform.workspace}-sg"
+    Environment = "${terraform.workspace}"
+    ApplicationRole = "Security Group - Redis - Airflow-${terraform.workspace}"
+    Project = "Airflow"
+    Squad = "BI"
+    Chapter = "BI"
+    CostCenter = "BI"
+    Confidentiality = "Low"
+  }
 }
 
-module "ariflow_db_sg" {
+module "airflow_db_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
   name        = "airflow-db-sg-${terraform.workspace}"
   description = "Security group for airflow database with custom ports open within VPC, and PostgreSQL"
-  vpc_id      = data.terraform_remote_state.network.vpc_id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   computed_ingress_with_source_security_group_id = [
     {
@@ -166,7 +219,16 @@ module "ariflow_db_sg" {
 
   number_of_computed_ingress_with_source_security_group_id = 4
 
-  tags = var.sg_tags
+  tags = {
+    Name = "airflow-database-bi-${terraform.workspace}-sg"
+    Environment = "${terraform.workspace}"
+    ApplicationRole = "Security Group - Database - Airflow-${terraform.workspace}"
+    Project = "Airflow"
+    Squad = "BI"
+    Chapter = "BI"
+    CostCenter = "BI"
+    Confidentiality = "Low"
+  }
 }
 
 module "airflow_codebuild_sg" {
@@ -174,19 +236,28 @@ module "airflow_codebuild_sg" {
 
   name        = "airflow-codebuild-sg"
   description = "Security group for Airflow Codebuild"
-  vpc_id      = data.terraform_remote_state.network.vpc_id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   egress_rules = ["all-all"]
 
-  tags = var.sg_tags
+  tags = {
+    Name = "airflow-codebuild-bi-${terraform.workspace}-sg"
+    Environment = "${terraform.workspace}"
+    ApplicationRole = "Security Group - Codebuild - Airflow-${terraform.workspace}"
+    Project = "Airflow"
+    Squad = "BI"
+    Chapter = "BI"
+    CostCenter = "BI"
+    Confidentiality = "Low"
+  }
 }
 
-module "ariflow_efs_sg" {
+module "airflow_efs_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
   name        = "airflow-dags-efs-sg-${terraform.workspace}"
   description = "Security group airflow dags efs."
-  vpc_id      = data.terraform_remote_state.network.vpc_id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   computed_ingress_with_source_security_group_id = [
     {
@@ -216,6 +287,14 @@ module "ariflow_efs_sg" {
 
   number_of_computed_ingress_with_source_security_group_id = 3
 
-  depends_on   = [module.airflow_webserver_sg, module.airflow_codebuild_sg, module.airflow_scheduler_sg]
-  tags = var.sg_tags
+  tags = {
+    Name = "airflow-efs-bi-${terraform.workspace}-sg"
+    Environment = "${terraform.workspace}"
+    ApplicationRole = "Security Group - EFS - Airflow-${terraform.workspace}"
+    Project = "Airflow"
+    Squad = "BI"
+    Chapter = "BI"
+    CostCenter = "BI"
+    Confidentiality = "Low"
+  }
 }

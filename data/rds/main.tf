@@ -1,7 +1,14 @@
-data "terraform_remote_state" "network" {
+terraform {
+  backend "s3" {
+    key    = "data/rds"
+    region = "us-east-1"
+  }
+}
+
+data "terraform_remote_state" "vpc" {
   backend = "s3"
   config = {
-    bucket = "terraform-state-airflow-letrus"
+    bucket = var.state_bucket
     key    = "network/vpc/terraform.tfstate"
     region = "us-east-1"
   }
@@ -10,7 +17,7 @@ data "terraform_remote_state" "network" {
 data "terraform_remote_state" "sg" {
   backend = "s3"
   config = {
-    bucket = "terraform-state-airflow-letrus"
+    bucket = var.state_bucket
     key    = "network/sg/terraform.tfstate"
     region = "us-east-1"
   }
@@ -42,7 +49,7 @@ module "db" {
 
   port     = "5432"
 
-  vpc_security_group_ids = [data.terraform_remote_state.sg.database_security_group_id]
+  vpc_security_group_ids = [data.terraform_remote_state.sg.outputs.database_security_group_id]
 
   maintenance_window = "Mon:00:00-Mon:03:00"
   backup_window      = "03:00-06:00"
@@ -51,12 +58,18 @@ module "db" {
   backup_retention_period = 0
 
   tags = {
-    Owner       = "airflow"
-    Environment = terraform.workspace
+    Name = "Airflow BI-${terraform.workspace}"
+    Environment = "${terraform.workspace}"
+    ApplicationRole = "RDS - Airflow-${terraform.workspace}"
+    Project = "Airflow"
+    Squad = "BI"
+    Chapter = "BI"
+    CostCenter = "BI"
+    Confidentiality = "Low"
   }
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
-  subnet_ids = data.terraform_remote_state.network.private_subnets
+  subnet_ids = split(",", data.terraform_remote_state.vpc.outputs.private_subnets)
   family = "postgres9.6"
   major_engine_version = "9.6"
   final_snapshot_identifier = "airflow-database"
