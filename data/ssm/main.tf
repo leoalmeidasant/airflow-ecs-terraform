@@ -5,6 +5,12 @@ terraform {
   }
 }
 
+resource "aws_ssm_parameter" "airflow_database_username" {
+  name  = "airflow_database_username"
+  type  = "String"
+  value = "airflow"
+}
+
 resource "aws_ssm_parameter" "airflow_database_password" {
   name  = "airflow_database_password"
   type  = "String"
