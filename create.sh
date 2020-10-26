@@ -2,7 +2,7 @@ source .env
 
 aws s3 mb s3://${STATE_BUCKET}
 
-# echo --------------------- Creating VPC resources ---------------------
+echo --------------------- Creating VPC resources ---------------------
 
 cd network/vpc/
 terraform init -backend-config="bucket=${STATE_BUCKET}"

@@ -3,5 +3,5 @@ output "airflow_ecr_endpoint" {
 }
 
 output "airflow_ecr_name" {
-    value = split("/", aws_ecr_repository.airflow_ecr_endpoint.repository_url)[0]
+    value = split("/", aws_ecr_repository.airflow_ecr_endpoint.repository_url)[1]
 }
